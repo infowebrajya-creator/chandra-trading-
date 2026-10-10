@@ -215,9 +215,9 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({
   });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)] gap-3 font-sans text-[#172B4D]">
+    <div className="flex flex-col h-auto md:h-[calc(100vh-4.5rem)] gap-3 font-sans text-[#172B4D] pb-16 md:pb-0">
       {/* Top Header & Actions */}
-      <div className="flex items-center justify-between bg-white border border-[#D8E1EC] rounded-xl p-4 shadow-sm shrink-0">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between bg-white border border-[#D8E1EC] rounded-xl p-3 sm:p-4 shadow-sm shrink-0 gap-3">
         <div>
           <h2 className="text-base font-extrabold text-[#172B4D] flex items-center gap-2">
             <Package className="w-5 h-5 text-[#2563EB]" /> Products & Stationery Catalog ({products.length} Items)
@@ -225,32 +225,32 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({
           <p className="text-xs text-[#64748B] mt-0.5">Manage SKU codes, barcodes, MRP/rates, GST slabs, and bulk import spreadsheets</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 w-full lg:w-auto">
           <button
             onClick={handleRunTestSuite}
-            className="px-3 py-2 bg-[#F3E8FF] hover:bg-[#E9D5FF] text-[#7E22CE] border border-[#E9D5FF] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-2.5 py-1.5 bg-[#F3E8FF] hover:bg-[#E9D5FF] text-[#7E22CE] border border-[#E9D5FF] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Run 6 import validation safety tests"
           >
-            <ShieldCheck className="w-4 h-4 text-[#7E22CE]" /> Run Import Tests
+            <ShieldCheck className="w-4 h-4 text-[#7E22CE]" /> Tests
           </button>
 
           <button
             onClick={() => setIsBulkImportOpen(true)}
-            className="px-3 py-2 bg-[#DBEAFE] hover:bg-[#BFDBFE] text-[#123B70] border border-[#BFDBFE] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-2.5 py-1.5 bg-[#DBEAFE] hover:bg-[#BFDBFE] text-[#123B70] border border-[#BFDBFE] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Upload className="w-4 h-4" /> Bulk Import
+            <Upload className="w-4 h-4" /> Import
           </button>
 
           <button
             onClick={exportCSV}
-            className="px-3 py-2 bg-white hover:bg-[#F5F9FF] text-[#172B4D] border border-[#D8E1EC] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-2.5 py-1.5 bg-white hover:bg-[#F5F9FF] text-[#172B4D] border border-[#D8E1EC] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Download className="w-4 h-4" /> Export CSV
+            <Download className="w-4 h-4" /> Export
           </button>
 
           <button
             onClick={handleOpenAddModal}
-            className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Add Product
           </button>
@@ -264,7 +264,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({
             <span>Automated Import Test Suite Results ({testResults.filter(t => t.passed).length}/{testResults.length} Passed)</span>
             <button onClick={() => setTestResults(null)} className="text-[#64748B] hover:text-[#172B4D] text-xs font-semibold cursor-pointer">Dismiss</button>
           </div>
-          <div className="grid grid-cols-3 gap-2 text-[11px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
             {testResults.map((t, i) => (
               <div key={i} className="p-2 bg-white rounded border border-[#D8E1EC] flex items-center justify-between">
                 <span className="truncate pr-1 text-[#172B4D] font-medium">{t.testName}</span>
@@ -276,8 +276,8 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({
       )}
 
       {/* Filter & Search Bar */}
-      <div className="grid grid-cols-12 gap-3 bg-white border border-[#D8E1EC] rounded-xl p-3 shrink-0 shadow-sm">
-        <div className="col-span-6 relative">
+      <div className="grid grid-cols-12 gap-2.5 bg-white border border-[#D8E1EC] rounded-xl p-3 shrink-0 shadow-sm">
+        <div className="col-span-12 md:col-span-6 relative">
           <Search className="w-4 h-4 absolute left-3 top-3 text-[#64748B]" />
           <input
             ref={searchInputRef}
@@ -289,7 +289,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-6 md:col-span-3">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -301,7 +301,7 @@ export const ProductsSection: React.FC<ProductsSectionProps> = ({
           </select>
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-6 md:col-span-3">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}

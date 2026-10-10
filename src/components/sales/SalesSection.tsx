@@ -155,9 +155,9 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)] gap-3 font-sans text-[#172B4D]">
+    <div className="flex flex-col h-auto md:h-[calc(100vh-4.5rem)] gap-3 font-sans text-[#172B4D] pb-16 md:pb-0">
       {/* Top Reporting Dashboard Stats */}
-      <div className="grid grid-cols-6 gap-3 shrink-0 font-sans">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 shrink-0 font-sans">
         <div className="p-3 bg-white border border-[#D8E1EC] rounded-xl shadow-sm">
           <div className="text-[10px] uppercase text-[#64748B] font-bold">Today's Sales (Completed)</div>
           <div className="text-xl font-black text-[#15803D] font-mono mt-1">{formatCurrency(todayCompletedSalesAmt)}</div>
@@ -196,12 +196,12 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
       </div>
 
       {/* Main Table Container */}
-      <div className="flex-1 bg-white border border-[#D8E1EC] rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
+      <div className="flex-1 bg-white border border-[#D8E1EC] rounded-xl p-3 sm:p-4 flex flex-col min-h-0 shadow-sm">
         {/* Filters & Actions Bar */}
-        <div className="flex items-center justify-between gap-3 pb-3 mb-3 border-b border-[#D8E1EC]">
-          <div className="flex items-center gap-2 flex-1">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 pb-3 mb-3 border-b border-[#D8E1EC]">
+          <div className="flex flex-wrap items-center gap-2 flex-1">
             {/* Search Input */}
-            <div className="relative flex-1 max-w-xs">
+            <div className="relative flex-1 min-w-[200px] max-w-full md:max-w-xs">
               <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-2.5" />
               <input
                 type="text"

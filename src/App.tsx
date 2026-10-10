@@ -78,8 +78,8 @@ export function App() {
           </div>
         </div>
 
-        {/* Horizontal Navigation Tabs */}
-        <nav className="flex items-center gap-1.5">
+        {/* Horizontal Navigation Tabs (Desktop only) */}
+        <nav className="hidden md:flex items-center gap-1.5">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
@@ -106,6 +106,11 @@ export function App() {
           })}
         </nav>
 
+        {/* Mobile current section indicator */}
+        <div className="md:hidden flex items-center gap-1.5 px-2.5 py-1 bg-[#2563EB]/40 rounded-lg text-xs font-bold text-white border border-white/20">
+          <span>{navItems.find(i => i.id === activeSection)?.label}</span>
+        </div>
+
         {/* Right Info: Compact Marg ERP Mode Badge */}
         <div className="hidden lg:flex items-center gap-2 bg-white/10 border border-white/15 px-3 py-1 rounded-lg text-xs font-mono text-blue-100">
           <span className="font-bold text-white flex items-center gap-1.5">
@@ -118,7 +123,7 @@ export function App() {
       </header>
 
       {/* Main Workspace Area (#F5F9FF background) */}
-      <main className="no-print flex-1 p-3 w-full mx-auto overflow-x-hidden">
+      <main className="no-print flex-1 p-2 pb-24 md:p-3 md:pb-3 w-full mx-auto overflow-x-hidden">
         {activeSection === 'billing' && (
           <BillingSection 
             onToast={addToast} 
@@ -138,6 +143,29 @@ export function App() {
         {activeSection === 'sales' && <SalesSection onToast={addToast} />}
         {activeSection === 'settings' && <SettingsSection onToast={addToast} />}
       </main>
+
+      {/* Mobile Fixed Bottom Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#123B70] text-white border-t border-[#0D2D56] flex items-center justify-around py-1.5 px-2 shadow-2xl safe-area-pb">
+        {navItems.map((item) => {
+          const isActive = activeSection === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex-1 ${
+                isActive
+                  ? 'bg-[#2563EB] text-white shadow-xs font-black'
+                  : 'text-blue-200/75 hover:text-white'
+              }`}
+            >
+              <div className="w-5 h-5 flex items-center justify-center">
+                {item.icon}
+              </div>
+              <span className="mt-0.5 leading-none">{item.label.replace(' POS', '')}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

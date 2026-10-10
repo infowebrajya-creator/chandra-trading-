@@ -43,17 +43,17 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#172B4D]/50 backdrop-blur-xs animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#172B4D]/50 backdrop-blur-xs animate-in fade-in duration-150">
       <div 
         className={clsx(
-          'w-full bg-white border border-[#D8E1EC] rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]',
+          'w-full bg-white border border-[#D8E1EC] rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[94vh] sm:max-h-[90vh]',
           maxWidthClasses[maxWidth]
         )}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#D8E1EC] bg-[#F5F9FF] sticky top-0 z-10">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-[#D8E1EC] bg-[#F5F9FF] sticky top-0 z-10">
           <div>
-            <h3 className="text-base font-extrabold text-[#172B4D] flex items-center gap-2">{title}</h3>
-            {subtitle && <p className="text-xs text-[#64748B] mt-0.5">{subtitle}</p>}
+            <h3 className="text-sm sm:text-base font-extrabold text-[#172B4D] flex items-center gap-2">{title}</h3>
+            {subtitle && <p className="text-[11px] sm:text-xs text-[#64748B] mt-0.5">{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 bg-white text-[#172B4D]">
+        <div className="p-3.5 sm:p-6 overflow-y-auto flex-1 bg-white text-[#172B4D]">
           {children}
         </div>
       </div>

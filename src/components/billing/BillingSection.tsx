@@ -15,6 +15,8 @@ import { QuickPayModal } from './QuickPayModal';
 import { A5PrintPreviewModal } from './A5PrintPreviewModal';
 import { AddCustomerModal } from './AddCustomerModal';
 import { NewBillRemarkModal } from './NewBillRemarkModal';
+import { MobileBillingView } from './MobileBillingView';
+import { useIsMobile } from '../../utils/useIsMobile';
 import { KeyboardBadge } from '../common/KeyboardBadge';
 import type { Product, Invoice, InvoiceType, Customer } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -409,6 +411,61 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
       setShowSuggestions(false);
     }
   });
+
+  const isMobile = useIsMobile(768);
+
+  if (isMobile) {
+    return (
+      <div className="font-sans text-[#172B4D]">
+        <MobileBillingView
+          onToast={onToast}
+          onOpenQuickPay={() => setIsQuickPayOpen(true)}
+          onOpenNewBill={handleOpenNewBill}
+          totals={totals}
+          isOnline={isOnline}
+          isSupabaseConnected={isSupabaseConnected}
+        />
+
+        {/* Modals */}
+        <QuickPayModal
+          isOpen={isQuickPayOpen}
+          onClose={() => setIsQuickPayOpen(false)}
+          netPayable={totals.netPayable}
+          paymentMode={paymentMode}
+          onSelectPaymentMode={setPaymentMode}
+          onConfirmPayment={handleConfirmSaveBill}
+          isSubmitting={isSubmitting}
+          items={items}
+          totals={totals}
+          customerName={customerName}
+          invoiceType={invoiceType}
+          notes={notes}
+          onNotesChange={setNotes}
+        />
+
+        <NewBillRemarkModal
+          isOpen={isNewBillModalOpen}
+          onClose={() => setIsNewBillModalOpen(false)}
+          initialRemark={notes}
+          onConfirm={handleConfirmNewBillRemark}
+        />
+
+        <A5PrintPreviewModal
+          isOpen={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+          invoice={completedInvoice}
+          shopProfile={shopProfile}
+          printSettings={printSettings}
+        />
+
+        <HoldDraftsModal
+          isOpen={isHoldDraftsOpen}
+          onClose={() => setIsHoldDraftsOpen(false)}
+          onToast={onToast}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-4.25rem)] gap-2.5 font-sans text-[#172B4D]">
