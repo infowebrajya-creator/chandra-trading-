@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Package, Receipt, Settings, Store } from 'lucide-react';
+import { ShoppingBag, Package, Receipt, Settings, Store, Headphones } from 'lucide-react';
 import { BillingSection } from './components/billing/BillingSection';
 import { ProductsSection } from './components/products/ProductsSection';
 import { SalesSection } from './components/sales/SalesSection';
 import { SettingsSection } from './components/settings/SettingsSection';
 import { ToastContainer, ToastMessage } from './components/common/Toast';
+import { SupportModal } from './components/common/SupportModal';
 import { useKeyboardShortcuts } from './utils/keyboard';
 import { useProductStore } from './store/useProductStore';
 import { useCustomerStore } from './store/useCustomerStore';
@@ -23,6 +24,7 @@ export function App() {
   const [activeSection, setActiveSection] = useState<MainSection>('billing');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isAddProductOpenFromApp, setIsAddProductOpenFromApp] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
 
   const addToast = (type: 'success' | 'error' | 'info', title: string, description?: string) => {
     const id = 'toast_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
@@ -106,11 +108,17 @@ export function App() {
           })}
         </nav>
 
-        {/* Mobile current section indicator */}
-        <div className="md:hidden flex items-center gap-1.5 px-2.5 py-1 bg-[#2563EB]/40 rounded-lg text-xs font-bold text-white border border-white/20">
-          <span>{navItems.find(i => i.id === activeSection)?.label}</span>
+        {/* Right Info: Vibrant Red Support Button */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsSupportOpen(true)}
+            className="bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold text-xs px-3 py-1.5 rounded-lg border border-red-400/50 shadow-md flex items-center gap-1.5 transition-all cursor-pointer hover:shadow-lg active:scale-95"
+            title="Support (Aryan Rajput: 9630013483)"
+          >
+            <Headphones className="w-4 h-4 animate-bounce" />
+            <span className="font-extrabold tracking-wide">Support</span>
+          </button>
         </div>
-
       </header>
 
       {/* Main Workspace Area (#F5F9FF background) */}
@@ -157,6 +165,9 @@ export function App() {
           );
         })}
       </nav>
+
+      {/* Support Contact Modal */}
+      <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
 
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
