@@ -83,16 +83,20 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
   // Load catalog & restore active cart on mount
   useEffect(() => {
     loadProducts();
-    restoreActiveCartFromIndexedDB();
+    restoreActiveCartFromIndexedDB().then(() => {
+      const currentCart = useBillingStore.getState();
+      if (currentCart.items.length === 0) {
+        setIsNewBillModalOpen(true);
+      } else {
+        setTimeout(() => barcodeInputRef.current?.focus(), 150);
+      }
+    });
     checkConnectionStatus();
 
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
-    // Auto-focus barcode search field when bill opens
-    setTimeout(() => barcodeInputRef.current?.focus(), 150);
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -359,6 +363,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
 
       if (shouldPrint) {
         triggerA5Print(inv, shopProfile, printSettings);
+        setIsNewBillModalOpen(true);
       } else {
         setCompletedInvoice(inv);
         setIsPreviewOpen(true);
@@ -371,6 +376,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
   };
 
   const handleOpenNewBill = () => {
+    clearBill();
     setIsNewBillModalOpen(true);
   };
 
@@ -476,7 +482,10 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
 
         <A5PrintPreviewModal
           isOpen={isPreviewOpen}
-          onClose={() => setIsPreviewOpen(false)}
+          onClose={() => {
+            setIsPreviewOpen(false);
+            setIsNewBillModalOpen(true);
+          }}
           invoice={completedInvoice}
           shopProfile={shopProfile}
           printSettings={printSettings}
@@ -1218,7 +1227,10 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
 
       <A5PrintPreviewModal
         isOpen={isPreviewOpen}
-        onClose={() => setIsPreviewOpen(false)}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setIsNewBillModalOpen(true);
+        }}
         invoice={completedInvoice}
         shopProfile={shopProfile}
         printSettings={printSettings}

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface User {
   id: string;
@@ -13,6 +13,15 @@ interface AuthState {
   user: User | null;
   login: (emailInput: string, passwordInput: string) => { success: boolean; message?: string };
   logout: () => void;
+}
+
+// Clean up legacy localStorage session if present so closing browser requires re-login
+if (typeof window !== 'undefined') {
+  try {
+    window.localStorage.removeItem('webrajya_auth_session');
+  } catch (e) {
+    // Ignore error in restricted environments
+  }
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -48,7 +57,9 @@ export const useAuthStore = create<AuthState>()(
       }
     }),
     {
-      name: 'webrajya_auth_session'
+      name: 'webrajya_auth_session',
+      storage: createJSONStorage(() => sessionStorage)
     }
   )
 );
+
