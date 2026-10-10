@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Package, Receipt, Settings, Store, Headphones } from 'lucide-react';
+import { ShoppingBag, Package, Receipt, Settings, Store, Headphones, LogOut } from 'lucide-react';
 import { BillingSection } from './components/billing/BillingSection';
 import { ProductsSection } from './components/products/ProductsSection';
 import { SalesSection } from './components/sales/SalesSection';
 import { SettingsSection } from './components/settings/SettingsSection';
 import { ToastContainer, ToastMessage } from './components/common/Toast';
 import { SupportModal } from './components/common/SupportModal';
+import { LoginPage } from './components/auth/LoginPage';
+import { useAuthStore } from './store/useAuthStore';
 import { useKeyboardShortcuts } from './utils/keyboard';
 import { useProductStore } from './store/useProductStore';
 import { useCustomerStore } from './store/useCustomerStore';
@@ -13,6 +15,7 @@ import { useCustomerStore } from './store/useCustomerStore';
 export type MainSection = 'billing' | 'products' | 'sales' | 'settings';
 
 export function App() {
+  const { isAuthenticated, logout, user } = useAuthStore();
   const loadProducts = useProductStore((state) => state.loadProducts);
   const loadCustomers = useCustomerStore((state) => state.loadCustomers);
 
@@ -61,6 +64,16 @@ export function App() {
     { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4 text-white" />, shortcut: '' },
   ];
 
+  // Render Login Page if user is not authenticated
+  if (!isAuthenticated) {
+    return (
+      <>
+        <LoginPage onOpenSupport={() => setIsSupportOpen(true)} />
+        <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F9FF] text-[#172B4D] flex flex-col font-sans antialiased">
       {/* SECTION 3: Compact Horizontal Top Navigation Bar (#123B70) */}
@@ -108,7 +121,7 @@ export function App() {
           })}
         </nav>
 
-        {/* Right Info: Vibrant Red Support Button */}
+        {/* Right Info: Vibrant Red Support Button & Logout */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsSupportOpen(true)}
@@ -117,6 +130,15 @@ export function App() {
           >
             <Headphones className="w-4 h-4 animate-bounce" />
             <span className="font-extrabold tracking-wide">Support</span>
+          </button>
+
+          <button
+            onClick={() => logout()}
+            className="bg-white/10 hover:bg-white/20 text-white/90 hover:text-white font-bold text-xs px-2.5 py-1.5 rounded-lg border border-white/15 flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Logout of POS"
+          >
+            <LogOut className="w-3.5 h-3.5 text-red-300" />
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </header>
