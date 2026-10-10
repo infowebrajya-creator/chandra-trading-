@@ -240,7 +240,6 @@ export function triggerA5Print(invoice: Invoice, shop: ShopProfile, _printSettin
             <div class="top-title">${docTitle}</div>
             <div class="header-block">
               <div style="width: 58%; display: flex; align-items: flex-start; gap: 10px;">
-                <img src="/logo.png" alt="Logo" style="width: 48px; height: 48px; object-fit: contain; flex-shrink: 0;" />
                 <div>
                   <div class="shop-title">M/s ${shop.shopName || 'KARE STATIONARY KATANGI'}</div>
                   <div style="font-size: 9.5px; font-weight: bold; text-transform: uppercase; margin-top: 2px;">
