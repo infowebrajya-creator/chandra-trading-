@@ -45,23 +45,26 @@ export const A5PrintInvoice: React.FC<A5PrintInvoiceProps> = ({ invoice, shopPro
 
         {/* Top Header Block: Shop Info (Left) & Invoice Meta (Right) */}
         <div className="a5-header-block">
-          <div className="w-[58%]">
-            <h1 className="font-extrabold text-[12.5px] uppercase leading-tight font-sans">
-              M/s {shopProfile.shopName || 'KARE STATIONARY KATANGI'}
-            </h1>
-            <div className="text-[9.5px] font-bold uppercase mt-0.5 font-sans">
-              {shopProfile.address || 'ADD KATANGI'}
+          <div className="w-[58%] flex items-start gap-2.5">
+            <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain shrink-0 mt-0.5" />
+            <div>
+              <h1 className="font-extrabold text-[12.5px] uppercase leading-tight font-sans">
+                M/s {shopProfile.shopName || 'KARE STATIONARY KATANGI'}
+              </h1>
+              <div className="text-[9.5px] font-bold uppercase mt-0.5 font-sans">
+                {shopProfile.address || 'ADD KATANGI'}
+              </div>
+              {shopProfile.gstin && (
+                <div className="text-[9px] font-semibold mt-0.5">
+                  GSTIN: {shopProfile.gstin}
+                </div>
+              )}
+              {shopProfile.phone && (
+                <div className="text-[9px] font-semibold">
+                  Ph: {shopProfile.phone}
+                </div>
+              )}
             </div>
-            {shopProfile.gstin && (
-              <div className="text-[9px] font-semibold mt-0.5">
-                GSTIN: {shopProfile.gstin}
-              </div>
-            )}
-            {shopProfile.phone && (
-              <div className="text-[9px] font-semibold">
-                Ph: {shopProfile.phone}
-              </div>
-            )}
           </div>
 
           <div className="w-[42%] pl-3 border-l border-black font-mono text-[10px] space-y-0.5">

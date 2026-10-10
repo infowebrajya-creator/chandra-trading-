@@ -65,7 +65,6 @@ export const MobileBillingView: React.FC<MobileBillingViewProps> = ({
 
   const handleAddProduct = (prod: Product) => {
     addItemByProduct(prod, 1);
-    onToast('success', `Added ${prod.name}`, `₹${prod.saleRate.toFixed(2)}`);
     setSearchQuery('');
   };
 
@@ -314,8 +313,8 @@ export const MobileBillingView: React.FC<MobileBillingViewProps> = ({
 
       {items.length === 0 ? (
         <div className="bg-white border border-[#D8E1EC] rounded-2xl p-8 text-center text-[#64748B] shadow-xs my-2">
-          <div className="w-12 h-12 rounded-full bg-[#DBEAFE] text-[#2563EB] mx-auto mb-3 flex items-center justify-center">
-            <ShoppingBag className="w-6 h-6" />
+          <div className="w-16 h-16 rounded-2xl bg-white border border-[#D8E1EC] p-2 mx-auto mb-3 flex items-center justify-center shadow-xs">
+            <img src="/logo.png" alt="WebRajya Invoice" className="w-full h-full object-contain" />
           </div>
           <div className="text-sm font-black text-[#172B4D]">Cart is Empty</div>
           <div className="text-xs text-[#64748B] mt-1 max-w-xs mx-auto">

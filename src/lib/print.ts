@@ -239,13 +239,16 @@ export function triggerA5Print(invoice: Invoice, shop: ShopProfile, _printSettin
           <div class="header-container">
             <div class="top-title">${docTitle}</div>
             <div class="header-block">
-              <div style="width: 58%;">
-                <div class="shop-title">M/s ${shop.shopName || 'KARE STATIONARY KATANGI'}</div>
-                <div style="font-size: 9.5px; font-weight: bold; text-transform: uppercase; margin-top: 2px;">
-                  ${shop.address || 'ADD KATANGI'}
+              <div style="width: 58%; display: flex; align-items: flex-start; gap: 10px;">
+                <img src="/logo.png" alt="Logo" style="width: 48px; height: 48px; object-fit: contain; flex-shrink: 0;" />
+                <div>
+                  <div class="shop-title">M/s ${shop.shopName || 'KARE STATIONARY KATANGI'}</div>
+                  <div style="font-size: 9.5px; font-weight: bold; text-transform: uppercase; margin-top: 2px;">
+                    ${shop.address || 'ADD KATANGI'}
+                  </div>
+                  ${shop.gstin ? `<div style="font-size: 9px; font-weight: 600;">GSTIN: ${shop.gstin}</div>` : ''}
+                  ${shop.phone ? `<div style="font-size: 9px; font-weight: 600;">Ph: ${shop.phone}</div>` : ''}
                 </div>
-                ${shop.gstin ? `<div style="font-size: 9px; font-weight: 600;">GSTIN: ${shop.gstin}</div>` : ''}
-                ${shop.phone ? `<div style="font-size: 9px; font-weight: 600;">Ph: ${shop.phone}</div>` : ''}
               </div>
 
               <div class="meta-side">

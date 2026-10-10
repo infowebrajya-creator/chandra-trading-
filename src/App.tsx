@@ -65,15 +65,15 @@ export function App() {
       <header className="no-print bg-[#123B70] text-white shrink-0 border-b border-[#0D2D56] shadow-xs sticky top-0 z-40 px-4 py-2 flex items-center justify-between">
         {/* Brand Identity */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#2563EB] flex items-center justify-center text-white shadow-xs shrink-0">
-            <Store className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-xl bg-white p-0.5 shadow-sm shrink-0 flex items-center justify-center overflow-hidden border border-white/20">
+            <img src="/logo.png" alt="WebRajya Invoice" className="w-full h-full object-contain" />
           </div>
           <div className="flex items-center gap-2">
             <h1 className="text-sm font-black text-white tracking-wide uppercase leading-none">
-              WEBRAJYA POS
+              WEBRAJYA <span className="text-[#FF8A00]">INVOICE</span>
             </h1>
             <span className="hidden sm:inline-block text-[11px] text-blue-200/80 font-medium border-l border-white/20 pl-2 leading-none">
-              Stationery Store Billing
+              Stationery POS
             </span>
           </div>
         </div>

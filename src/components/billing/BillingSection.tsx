@@ -232,7 +232,6 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
 
     if (selectedProduct) {
       addItemByProduct(selectedProduct, fastQty, fastSchemeDisc, fastAddlDisc, fastFreeQty);
-      onToast('success', `Added ${selectedProduct.name}`, `Qty: ${fastQty} ${selectedProduct.unit}`);
       resetFastInputs();
       return;
     }
@@ -245,7 +244,6 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
     if (matchingBarcodes.length === 1) {
       const prod = matchingBarcodes[0];
       addItemByProduct(prod, fastQty, fastSchemeDisc, fastAddlDisc, fastFreeQty);
-      onToast('success', `Scanned & Added ${prod.name}`, `Qty: ${fastQty} ${prod.unit}`);
       resetFastInputs();
       return;
     }
@@ -254,7 +252,6 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
     const matchingSku = products.find(p => p.sku.toLowerCase().trim() === searchTerm.toLowerCase());
     if (matchingSku) {
       addItemByProduct(matchingSku, fastQty, fastSchemeDisc, fastAddlDisc, fastFreeQty);
-      onToast('success', `Added ${matchingSku.name}`, `Qty: ${fastQty}`);
       resetFastInputs();
       return;
     }
@@ -851,7 +848,9 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
                 {items.length === 0 ? (
                   <tr>
                     <td colSpan={11} className="py-16 text-center text-[#64748B]">
-                      <ShoppingBag className="w-12 h-12 mx-auto mb-2 text-[#94A3B8] opacity-60" />
+                      <div className="w-16 h-16 rounded-2xl bg-white border border-[#D8E1EC] p-2 mx-auto mb-3 shadow-xs flex items-center justify-center">
+                        <img src="/logo.png" alt="WebRajya Invoice" className="w-full h-full object-contain" />
+                      </div>
                       <div className="font-bold text-base text-[#172B4D]">No stationery items in bill</div>
                       <div className="text-sm text-[#64748B] mt-1">Scan barcode or press F4 to search product catalog</div>
                     </td>
