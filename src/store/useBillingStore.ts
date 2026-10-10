@@ -13,6 +13,7 @@ interface BillingState {
   paymentMode: PaymentMode;
   paidAmount: number;
   billDiscountAmount: number;
+  billDiscountPct: number;
   freightAmount: number;
   isInterstate: boolean;
   notes: string;
@@ -24,6 +25,7 @@ interface BillingState {
   setPaymentMode: (mode: PaymentMode) => void;
   setPaidAmount: (amount: number) => void;
   setBillDiscountAmount: (amount: number) => void;
+  setBillDiscountPct: (pct: number) => void;
   setFreightAmount: (amount: number) => void;
   setIsInterstate: (isInterstate: boolean) => void;
   setNotes: (notes: string) => void;
@@ -59,6 +61,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
   paymentMode: 'cash',
   paidAmount: 0,
   billDiscountAmount: 0,
+  billDiscountPct: 0,
   freightAmount: 0,
   isInterstate: false,
   notes: '',
@@ -87,6 +90,11 @@ export const useBillingStore = create<BillingState>((set, get) => ({
 
   setBillDiscountAmount: (billDiscountAmount) => {
     set({ billDiscountAmount });
+    get().persistActiveCartToIndexedDB();
+  },
+
+  setBillDiscountPct: (billDiscountPct) => {
+    set({ billDiscountPct });
     get().persistActiveCartToIndexedDB();
   },
 
@@ -266,6 +274,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
       paymentMode: 'cash',
       paidAmount: 0,
       billDiscountAmount: 0,
+      billDiscountPct: 0,
       freightAmount: 0,
       isInterstate: false,
       notes: '',
@@ -351,6 +360,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
       paymentMode: state.paymentMode,
       paidAmount: state.paidAmount,
       billDiscountAmount: state.billDiscountAmount,
+      billDiscountPct: state.billDiscountPct,
       freightAmount: state.freightAmount,
       isInterstate: state.isInterstate,
       notes: state.notes,
@@ -375,6 +385,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
           paymentMode: val.paymentMode || 'cash',
           paidAmount: val.paidAmount || 0,
           billDiscountAmount: val.billDiscountAmount || 0,
+          billDiscountPct: val.billDiscountPct || 0,
           freightAmount: val.freightAmount || 0,
           isInterstate: val.isInterstate || false,
           notes: val.notes || '',

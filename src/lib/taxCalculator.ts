@@ -115,6 +115,7 @@ export function calculateInvoiceTotals(
 
   return {
     subtotal: Math.round(subtotal * 100) / 100,
+    grossPayable: Math.round(grossPayable * 100) / 100,
     totalDiscount,
     totalGst,
     cgstTotal: isGstEnabled ? Math.round(cgstTotal * 100) / 100 : 0,

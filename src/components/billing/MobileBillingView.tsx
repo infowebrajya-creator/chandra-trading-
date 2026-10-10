@@ -15,6 +15,7 @@ interface MobileBillingViewProps {
   onOpenNewBill: () => void;
   totals: {
     subtotal: number;
+    grossPayable?: number;
     totalDiscount: number;
     totalGst: number;
     cgstTotal: number;
@@ -37,8 +38,9 @@ export const MobileBillingView: React.FC<MobileBillingViewProps> = ({
 }) => {
   const {
     customerName, customerMobile, customerGstin, customerAddress, invoiceType,
-    items, notes, isInterstate,
+    items, notes, isInterstate, billDiscountAmount, billDiscountPct,
     setCustomerInfo, setInvoiceType, setIsInterstate, setNotes,
+    setBillDiscountAmount, setBillDiscountPct,
     addItemByProduct, updateItemQty, removeItem, clearBill
   } = useBillingStore();
 
@@ -479,6 +481,93 @@ export const MobileBillingView: React.FC<MobileBillingViewProps> = ({
                   </div>
                 </>
               )}
+
+              {/* Final Discount in Mobile Drawer */}
+              <div className="py-2 border-y border-dashed border-[#CBD5E1] space-y-1.5">
+                <div className="flex justify-between items-center text-[#475569]">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-xs text-[#172B4D]">Final Discount:</span>
+                    <span className="text-[10px] text-[#64748B]">
+                      {billDiscountPct > 0 ? `${billDiscountPct}% applied` : 'In % or ₹'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {/* % input */}
+                    <div className="relative flex items-center">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step="any"
+                        value={billDiscountPct > 0 ? billDiscountPct : ''}
+                        onChange={(e) => {
+                          const pct = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
+                          setBillDiscountPct(pct);
+                          const base = isGstEnabled ? (totals.grossPayable || totals.subtotal) : totals.subtotal;
+                          setBillDiscountAmount(pct > 0 && base > 0 ? Math.round(((base * pct) / 100) * 100) / 100 : 0);
+                        }}
+                        className="w-14 h-7 pl-1.5 pr-4 bg-white border-2 border-[#CBD5E1] rounded text-right text-[#15803D] text-xs font-mono font-bold focus:border-[#2563EB] focus:outline-none"
+                        placeholder="0"
+                      />
+                      <span className="absolute right-1 text-[10px] font-bold text-[#64748B] pointer-events-none">%</span>
+                    </div>
+
+                    {/* ₹ input */}
+                    <div className="relative flex items-center">
+                      <span className="absolute left-1 text-[10px] font-bold text-[#64748B] pointer-events-none">₹</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="any"
+                        value={billDiscountAmount > 0 ? billDiscountAmount : ''}
+                        onChange={(e) => {
+                          const amt = Math.max(0, parseFloat(e.target.value) || 0);
+                          setBillDiscountAmount(amt);
+                          const base = isGstEnabled ? (totals.grossPayable || totals.subtotal) : totals.subtotal;
+                          setBillDiscountPct(base > 0 ? Math.round(((amt / base) * 100) * 100) / 100 : 0);
+                        }}
+                        className="w-16 h-7 pl-3.5 pr-1 bg-white border-2 border-[#CBD5E1] rounded text-right text-[#15803D] text-xs font-mono font-bold focus:border-[#2563EB] focus:outline-none"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick % buttons */}
+                <div className="flex items-center justify-end gap-1">
+                  <span className="text-[10px] text-[#94A3B8] mr-0.5">Quick:</span>
+                  {[2, 3, 5, 10].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => {
+                        setBillDiscountPct(p);
+                        const base = isGstEnabled ? (totals.grossPayable || totals.subtotal) : totals.subtotal;
+                        setBillDiscountAmount(base > 0 ? Math.round(((base * p) / 100) * 100) / 100 : 0);
+                      }}
+                      className={`px-1.5 py-0.5 text-[10px] font-bold font-mono rounded transition-colors cursor-pointer border ${
+                        billDiscountPct === p
+                          ? 'bg-[#15803D] text-white border-[#15803D]'
+                          : 'bg-white hover:bg-[#F0FDF4] hover:text-[#15803D] text-[#475569] border-[#CBD5E1]'
+                      }`}
+                    >
+                      {p}%
+                    </button>
+                  ))}
+                  {billDiscountPct > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBillDiscountPct(0);
+                        setBillDiscountAmount(0);
+                      }}
+                      className="px-1.5 py-0.5 text-[10px] font-bold text-[#EF4444] hover:bg-red-50 rounded border border-red-200 transition-colors cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
 
               <div className="flex justify-between text-[#64748B]">
                 <span>Round Off:</span>

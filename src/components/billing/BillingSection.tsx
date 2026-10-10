@@ -32,8 +32,8 @@ interface BillingSectionProps {
 export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenAddProductModal }) => {
   const { 
     customerName, customerMobile, customerGstin, customerAddress, invoiceType,
-    items, paymentMode, paidAmount, billDiscountAmount, freightAmount, isInterstate, notes, idempotencyKey,
-    setCustomerInfo, setInvoiceType, setPaymentMode, setBillDiscountAmount, setFreightAmount, setIsInterstate, setNotes,
+    items, paymentMode, paidAmount, billDiscountAmount, billDiscountPct, freightAmount, isInterstate, notes, idempotencyKey,
+    setCustomerInfo, setInvoiceType, setPaymentMode, setBillDiscountAmount, setBillDiscountPct, setFreightAmount, setIsInterstate, setNotes,
     addItemByProduct, updateItemQty, updateItemFreeQty, updateItemRate, 
     updateItemSchemeDiscount, updateItemAddlDiscount, removeItem, clearBill,
     restoreActiveCartFromIndexedDB
@@ -150,6 +150,33 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
 
   const isGstEnabled = invoiceType === 'gst';
   const totals = calculateInvoiceTotals(items, billDiscountAmount, freightAmount, isGstEnabled);
+  const discountBase = isGstEnabled ? totals.grossPayable : totals.subtotal;
+
+  // Auto-sync discount in ₹ when discount in % is active and items change
+  useEffect(() => {
+    if (billDiscountPct > 0 && discountBase > 0) {
+      const computedAmt = Math.round(((discountBase * billDiscountPct) / 100) * 100) / 100;
+      if (Math.abs(computedAmt - billDiscountAmount) > 0.01) {
+        setBillDiscountAmount(computedAmt);
+      }
+    } else if (discountBase === 0 && billDiscountAmount > 0) {
+      setBillDiscountAmount(0);
+    }
+  }, [items, isGstEnabled, billDiscountPct, discountBase, billDiscountAmount, setBillDiscountAmount]);
+
+  const handleBillDiscountPctChange = (pct: number) => {
+    const cleanPct = Math.max(0, Math.min(100, pct));
+    setBillDiscountPct(cleanPct);
+    const amt = cleanPct > 0 && discountBase > 0 ? Math.round(((discountBase * cleanPct) / 100) * 100) / 100 : 0;
+    setBillDiscountAmount(amt);
+  };
+
+  const handleBillDiscountAmountChange = (amt: number) => {
+    const cleanAmt = Math.max(0, amt);
+    setBillDiscountAmount(cleanAmt);
+    const pct = discountBase > 0 ? Math.round(((cleanAmt / discountBase) * 100) * 100) / 100 : 0;
+    setBillDiscountPct(pct);
+  };
 
   // Live product search suggestions state
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -1036,17 +1063,81 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
                 />
               </div>
 
-              {/* Editable Bill Level Discount */}
-              <div className="flex justify-between items-center text-[#475569]">
-                <span className="font-medium">Overall Bill Disc:</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={billDiscountAmount || ''}
-                  onChange={(e) => setBillDiscountAmount(parseFloat(e.target.value) || 0)}
-                  className="w-20 h-8 px-2 py-1 bg-white border-2 border-[#CBD5E1] rounded-lg text-right text-[#15803D] text-sm font-mono font-black focus:border-[#2563EB] focus:outline-none"
-                  placeholder="0"
-                />
+              {/* Editable Bill Level Final Discount: Dual % and ₹ */}
+              <div className="space-y-1.5 py-0.5">
+                <div className="flex justify-between items-center text-[#475569]">
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-sm text-[#172B4D]">Final Discount:</span>
+                    <span className="text-[10px] text-[#64748B]">
+                      {billDiscountPct > 0 ? `${billDiscountPct}% applied` : 'Enter in % or ₹'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {/* % input */}
+                    <div className="relative flex items-center" title="Final Discount in %">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step="any"
+                        value={billDiscountPct > 0 ? billDiscountPct : ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleBillDiscountPctChange(val === '' ? 0 : (parseFloat(val) || 0));
+                        }}
+                        className="w-16 h-8 pl-1.5 pr-5 py-1 bg-white border-2 border-[#CBD5E1] rounded-lg text-right text-[#15803D] text-sm font-mono font-black focus:border-[#2563EB] focus:outline-none"
+                        placeholder="0"
+                      />
+                      <span className="absolute right-1.5 text-xs font-bold text-[#64748B] pointer-events-none select-none">%</span>
+                    </div>
+
+                    {/* ₹ input */}
+                    <div className="relative flex items-center" title="Discount Amount in ₹">
+                      <span className="absolute left-1.5 text-xs font-bold text-[#64748B] pointer-events-none select-none">₹</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="any"
+                        value={billDiscountAmount > 0 ? billDiscountAmount : ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleBillDiscountAmountChange(val === '' ? 0 : (parseFloat(val) || 0));
+                        }}
+                        className="w-20 h-8 pl-4 pr-1.5 py-1 bg-white border-2 border-[#CBD5E1] rounded-lg text-right text-[#15803D] text-sm font-mono font-black focus:border-[#2563EB] focus:outline-none"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick % shortcut buttons */}
+                <div className="flex items-center justify-end gap-1">
+                  <span className="text-[10px] text-[#94A3B8] mr-0.5">Quick:</span>
+                  {[2, 3, 5, 10].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => handleBillDiscountPctChange(p)}
+                      className={`px-1.5 py-0.5 text-[10px] font-bold font-mono rounded transition-colors cursor-pointer border ${
+                        billDiscountPct === p
+                          ? 'bg-[#15803D] text-white border-[#15803D]'
+                          : 'bg-white hover:bg-[#F0FDF4] hover:text-[#15803D] text-[#475569] border-[#CBD5E1]'
+                      }`}
+                    >
+                      {p}%
+                    </button>
+                  ))}
+                  {billDiscountPct > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleBillDiscountPctChange(0)}
+                      className="px-1.5 py-0.5 text-[10px] font-bold text-[#EF4444] hover:bg-red-50 rounded border border-red-200 transition-colors cursor-pointer"
+                      title="Clear discount"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="flex justify-between items-center text-[#475569] pt-1 border-t border-dashed border-[#CBD5E1]">
