@@ -241,9 +241,9 @@ export function triggerA5Print(invoice: Invoice, shop: ShopProfile, _printSettin
             <div class="header-block">
               <div style="width: 58%; display: flex; align-items: flex-start; gap: 10px;">
                 <div>
-                  <div class="shop-title">M/s ${shop.shopName || 'KARE STATIONARY KATANGI'}</div>
+                  <div class="shop-title">M/s ${shop.shopName || 'CHANDRA TRADING COMPANY'}</div>
                   <div style="font-size: 9.5px; font-weight: bold; text-transform: uppercase; margin-top: 2px;">
-                    ${shop.address || 'ADD KATANGI'}
+                    ${shop.address || 'NEW SHUKRAWARI MARKET, SEONI - 480661 (M.P.)'}
                   </div>
                   ${shop.gstin ? `<div style="font-size: 9px; font-weight: 600;">GSTIN: ${shop.gstin}</div>` : ''}
                   ${shop.phone ? `<div style="font-size: 9px; font-weight: 600;">Ph: ${shop.phone}</div>` : ''}

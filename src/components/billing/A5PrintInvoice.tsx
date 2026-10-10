@@ -48,10 +48,10 @@ export const A5PrintInvoice: React.FC<A5PrintInvoiceProps> = ({ invoice, shopPro
           <div className="w-[58%] flex items-start gap-2.5">
             <div>
               <h1 className="font-extrabold text-[12.5px] uppercase leading-tight font-sans">
-                M/s {shopProfile.shopName || 'KARE STATIONARY KATANGI'}
+                M/s {shopProfile.shopName || 'CHANDRA TRADING COMPANY'}
               </h1>
               <div className="text-[9.5px] font-bold uppercase mt-0.5 font-sans">
-                {shopProfile.address || 'ADD KATANGI'}
+                {shopProfile.address || 'NEW SHUKRAWARI MARKET, SEONI - 480661 (M.P.)'}
               </div>
               {shopProfile.gstin && (
                 <div className="text-[9px] font-semibold mt-0.5">

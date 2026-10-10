@@ -28,20 +28,20 @@ export const db = new WebRajyaDatabase();
 
 // Default Shop Profile Settings
 export const DEFAULT_SHOP_PROFILE: ShopProfile = {
-  shopName: 'WebRajya Stationery & Books',
-  tagline: 'All Stationery, School & Office Supplies',
-  address: 'Shop No. 12, Main Market Road, Near City Central, New Delhi - 110001',
-  phone: '+91 98765 43210',
-  email: 'contact@webrajyastationery.com',
-  gstin: '07AAAAA0000A1Z5',
-  state: 'Delhi (07)',
-  pincode: '110001',
+  shopName: 'CHANDRA TRADING COMPANY',
+  tagline: 'Stationery Wholesaler / Trading',
+  address: 'New Shukrawari Market, Seoni, Madhya Pradesh - 480661',
+  phone: '+91 94251 74721',
+  email: 'mjain21@gmail.com',
+  gstin: '23ACSPV5903B1ZK',
+  state: 'Madhya Pradesh (23)',
+  pincode: '480661',
   bankName: 'State Bank of India',
   accountNo: '34567890123',
   ifscCode: 'SBIN0001234',
-  upiId: 'webrajyastationery@sbi',
-  invoicePrefix: 'WR-',
-  termsAndConditions: '1. Goods once sold will not be taken back without bill.\n2. Warranty as per manufacturer guidelines.\n3. Subject to local jurisdiction.'
+  upiId: 'mjain21@sbi',
+  invoicePrefix: 'CTC-',
+  termsAndConditions: '1. Goods once sold will not be taken back without bill.\n2. Warranty as per manufacturer guidelines.\n3. Subject to Seoni jurisdiction.'
 };
 
 export const DEFAULT_PRINT_SETTINGS: PrintSettings = {

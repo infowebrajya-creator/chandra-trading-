@@ -37,8 +37,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const printRec = await db.keyValueSettings.get('printSettings');
       const supaRec = await db.keyValueSettings.get('supabaseConfig');
 
+      let currentShop = shopRec ? shopRec.value : DEFAULT_SHOP_PROFILE;
+      if (!shopRec || currentShop.shopName === 'WebRajya Stationery & Books' || currentShop.shopName === 'KARE STATIONARY KATANGI') {
+        currentShop = DEFAULT_SHOP_PROFILE;
+        await db.keyValueSettings.put({ key: 'shopProfile', value: DEFAULT_SHOP_PROFILE });
+      }
+
       set({
-        shopProfile: shopRec ? shopRec.value : DEFAULT_SHOP_PROFILE,
+        shopProfile: currentShop,
         printSettings: printRec ? printRec.value : DEFAULT_PRINT_SETTINGS,
         supabaseConfig: supaRec ? supaRec.value : DEFAULT_SUPABASE_CONFIG,
         isLoading: false
