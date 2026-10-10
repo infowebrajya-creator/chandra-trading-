@@ -111,15 +111,6 @@ export function App() {
           <span>{navItems.find(i => i.id === activeSection)?.label}</span>
         </div>
 
-        {/* Right Info: Compact Marg ERP Mode Badge */}
-        <div className="hidden lg:flex items-center gap-2 bg-white/10 border border-white/15 px-3 py-1 rounded-lg text-xs font-mono text-blue-100">
-          <span className="font-bold text-white flex items-center gap-1.5">
-            Marg ERP Mode
-            <span className="px-1.5 py-0.2 text-[9px] bg-[#2563EB] text-white rounded font-black">FAST</span>
-          </span>
-          <span className="text-white/30">•</span>
-          <span className="text-[10px] text-blue-200">F2: New | F4: Search | F8: Settle</span>
-        </div>
       </header>
 
       {/* Main Workspace Area (#F5F9FF background) */}
