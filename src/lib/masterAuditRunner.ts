@@ -1,0 +1,61 @@
+import { runProductsImportTestSuite } from './importTester';
+import { runBillingCalculationTestSuite } from './billingEngine.test';
+import { runPaymentWorkflowTestSuite } from './paymentWorkflow.test';
+import { runPrintInvoiceTestSuite } from './printInvoice.test';
+import { runSalesAndExportTestSuite } from './salesAndExport.test';
+
+export async function runMasterAuditSuite() {
+  console.log('====================================================');
+  console.log('  WEBRAJYA BILLING POS - MASTER INTEGRATION AUDIT   ');
+  console.log('====================================================\n');
+
+  // Suite 1: Product Import
+  const importResults = runProductsImportTestSuite([]);
+  console.log(`[1/5] Product Catalogue Import Suite: ${importResults.filter(r => r.passed).length}/${importResults.length} PASSED`);
+
+  // Suite 2: Billing Engine Math
+  const billingResults = runBillingCalculationTestSuite();
+  console.log(`[2/5] Billing Calculation Engine Suite: ${billingResults.filter(r => r.passed).length}/${billingResults.length} PASSED`);
+
+  // Suite 3: Payment Workflow & Atomic Stock
+  const paymentResults = await runPaymentWorkflowTestSuite();
+  console.log(`[3/5] Payment & Atomic Stock Workflow Suite: ${paymentResults.filter(r => r.passed).length}/${paymentResults.length} PASSED`);
+
+  // Suite 4: A5 Print Layout
+  const printResults = runPrintInvoiceTestSuite();
+  console.log(`[4/5] A5 Print Layout & Totals Suite: ${printResults.filter(r => r.passed).length}/${printResults.length} PASSED`);
+
+  // Suite 5: Sales History, Reporting & CSV Export
+  const salesExportResults = await runSalesAndExportTestSuite();
+  console.log(`[5/5] Sales History & CSV Export Suite: ${salesExportResults.filter(r => r.passed).length}/${salesExportResults.length} PASSED`);
+
+  const allResults = [
+    ...importResults,
+    ...billingResults,
+    ...paymentResults,
+    ...printResults,
+    ...salesExportResults
+  ];
+
+  const totalPassed = allResults.filter(r => r.passed).length;
+  const totalTests = allResults.length;
+
+  console.log('\n----------------------------------------------------');
+  console.log(`  AUDIT SUMMARY: ${totalPassed} / ${totalTests} TOTAL TESTS PASSED (${((totalPassed / totalTests) * 100).toFixed(1)}%)`);
+  console.log('----------------------------------------------------');
+
+  return {
+    totalTests,
+    totalPassed,
+    allPassed: totalPassed === totalTests,
+    breakdown: {
+      import: importResults,
+      billing: billingResults,
+      payment: paymentResults,
+      print: printResults,
+      salesExport: salesExportResults
+    }
+  };
+}
+
+// Auto-execution via CLI node entry point handled externally
