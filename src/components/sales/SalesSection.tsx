@@ -70,8 +70,6 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
   const todayCancelledCount = todayCancelled.length;
   const todayCancelledAmt = todayCancelled.reduce((sum, i) => sum + i.netPayable, 0);
 
-  const lowStockCount = products.filter(p => p.isActive && p.stockQty <= p.minStockLevel).length;
-
   // Filter Invoices
   const filteredInvoices = invoices.filter(inv => {
     // Search query
@@ -160,7 +158,7 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
   return (
     <div className="flex flex-col h-auto md:h-[calc(100vh-4.5rem)] gap-3 font-sans text-[#172B4D] pb-16 md:pb-0">
       {/* Top Reporting Dashboard Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 shrink-0 font-sans">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 shrink-0 font-sans">
         <div className="p-3 bg-white border border-[#D8E1EC] rounded-xl shadow-sm">
           <div className="text-[10px] uppercase text-[#64748B] font-bold">Today's Sales (Completed)</div>
           <div className="text-xl font-black text-[#15803D] font-mono mt-1">{formatCurrency(todayCompletedSalesAmt)}</div>
@@ -189,12 +187,6 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
           <div className="text-[10px] uppercase text-[#B91C1C] font-bold">Reversals / Cancelled</div>
           <div className="text-xl font-black text-[#B91C1C] font-mono mt-1">{formatCurrency(todayCancelledAmt)}</div>
           <div className="text-[10px] text-[#B91C1C] mt-0.5">{todayCancelledCount} reversed bill(s)</div>
-        </div>
-
-        <div className="p-3 bg-white border border-[#FDE68A] bg-[#FEF3C7]/30 rounded-xl shadow-sm">
-          <div className="text-[10px] uppercase text-[#B45309] font-bold">Low Stock Products</div>
-          <div className="text-xl font-black text-[#B45309] font-mono mt-1">{lowStockCount}</div>
-          <div className="text-[10px] text-[#B45309] mt-0.5">Below min threshold</div>
         </div>
       </div>
 
