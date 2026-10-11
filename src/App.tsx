@@ -25,6 +25,13 @@ export function App() {
     loadProducts();
     loadCustomers();
     loadInvoices();
+
+    const handleOnline = () => {
+      loadInvoices();
+      loadProducts();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, [loadProducts, loadCustomers, loadInvoices]);
   // REQUIREMENT: Default screen is Billing POS
   const [activeSection, setActiveSection] = useState<MainSection>('billing');
