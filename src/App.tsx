@@ -15,11 +15,44 @@ import { useSalesStore } from './store/useSalesStore';
 
 export type MainSection = 'billing' | 'products' | 'sales' | 'settings';
 
+function getInitialSection(): MainSection {
+  if (typeof window !== 'undefined') {
+    const hash = window.location.hash.replace('#', '') as MainSection;
+    if (['billing', 'products', 'sales', 'settings'].includes(hash)) {
+      return hash;
+    }
+    const saved = localStorage.getItem('webrajya_active_section') as MainSection;
+    if (saved && ['billing', 'products', 'sales', 'settings'].includes(saved)) {
+      return saved;
+    }
+  }
+  return 'billing';
+}
+
 export function App() {
   const { isAuthenticated, logout, user } = useAuthStore();
   const loadProducts = useProductStore((state) => state.loadProducts);
   const loadCustomers = useCustomerStore((state) => state.loadCustomers);
   const loadInvoices = useSalesStore((state) => state.loadInvoices);
+
+  // Restore current tab on page refresh
+  const [activeSection, setActiveSection] = useState<MainSection>(getInitialSection);
+
+  useEffect(() => {
+    localStorage.setItem('webrajya_active_section', activeSection);
+    window.location.hash = activeSection;
+  }, [activeSection]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '') as MainSection;
+      if (['billing', 'products', 'sales', 'settings'].includes(hash)) {
+        setActiveSection(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   useEffect(() => {
     loadProducts();
@@ -33,8 +66,7 @@ export function App() {
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
   }, [loadProducts, loadCustomers, loadInvoices]);
-  // REQUIREMENT: Default screen is Billing POS
-  const [activeSection, setActiveSection] = useState<MainSection>('billing');
+
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isAddProductOpenFromApp, setIsAddProductOpenFromApp] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
