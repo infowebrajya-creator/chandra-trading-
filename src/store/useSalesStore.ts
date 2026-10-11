@@ -24,6 +24,7 @@ interface SalesState {
   ) => Promise<Invoice>;
   cancelInvoice: (invoiceId: string, restoreStock?: boolean, reason?: string) => Promise<void>;
   syncInvoicesWithSupabase: () => Promise<{ success: boolean; message: string }>;
+  clearAllSalesData: (alsoClearSupabase?: boolean) => Promise<void>;
 }
 
 let realtimeSubscribed = false;
@@ -635,6 +636,27 @@ export const useSalesStore = create<SalesState>((set, get) => ({
       };
     } catch (err: any) {
       return { success: false, message: err?.message || 'Invoice sync failed' };
+    }
+  },
+
+  clearAllSalesData: async (alsoClearSupabase = false) => {
+    set({ isLoading: true, error: null });
+    try {
+      await db.invoices.clear();
+      await db.stockMovements.clear();
+
+      if (alsoClearSupabase) {
+        const client = getSupabaseClient();
+        if (client) {
+          await client.from('invoice_items').delete().neq('id', 'all_rows_delete');
+          await client.from('invoices').delete().neq('id', 'all_rows_delete');
+        }
+      }
+
+      set({ invoices: [], isLoading: false });
+    } catch (e: any) {
+      set({ isLoading: false, error: e.message });
+      throw e;
     }
   }
 }));

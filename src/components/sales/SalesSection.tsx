@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Receipt, Search, Printer, Eye, XCircle, Download, RefreshCw 
+  Receipt, Search, Printer, Eye, XCircle, Download, RefreshCw, Trash2 
 } from 'lucide-react';
 import { useSalesStore } from '../../store/useSalesStore';
 import { useProductStore } from '../../store/useProductStore';
@@ -24,7 +24,7 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
   const { 
     invoices, isLoading, searchQuery, paymentFilter, dateRange, 
     setSearchQuery, setPaymentFilter, setDateRange, loadInvoices, cancelInvoice,
-    syncInvoicesWithSupabase
+    syncInvoicesWithSupabase, clearAllSalesData
   } = useSalesStore();
 
   const { products, loadProducts } = useProductStore();
@@ -56,6 +56,18 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
       onToast('error', 'Sync Failed', e?.message || 'Failed to sync with Supabase.');
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleClearOldSalesData = async () => {
+    if (!window.confirm('Are you sure you want to remove all old/test sales bills? This will reset sales history to match your clean Supabase database.')) {
+      return;
+    }
+    try {
+      await clearAllSalesData(true);
+      onToast('success', 'Sales Data Reset', 'All old/test sales bills have been removed.');
+    } catch (e: any) {
+      onToast('error', 'Reset Failed', e?.message || 'Failed to reset sales data.');
     }
   };
 
@@ -287,6 +299,16 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
             >
               <RefreshCw className={`w-3.5 h-3.5 text-[#2563EB] ${isSyncing || isLoading ? 'animate-spin' : ''}`} />
               <span>{isSyncing ? 'Syncing...' : 'Sync Cloud'}</span>
+            </button>
+
+            <button
+              onClick={handleClearOldSalesData}
+              disabled={isLoading}
+              className="px-3 py-2 bg-white hover:bg-red-50 border border-red-200 text-[#B91C1C] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              title="Remove old mock bills to match your clean Supabase database"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-[#B91C1C]" />
+              <span>Clear Old Data</span>
             </button>
 
             <button
