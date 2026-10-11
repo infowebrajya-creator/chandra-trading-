@@ -143,7 +143,7 @@ export const A5PrintInvoice: React.FC<A5PrintInvoiceProps> = ({ invoice, shopPro
           </thead>
           <tbody>
             {items.map((item, index) => {
-              const remarkText = item.pack || (item.hsnCode ? `HSN:${item.hsnCode}` : '');
+              const remarkText = item.remark || item.pack || (item.hsnCode ? `HSN:${item.hsnCode}` : '');
               const itemTotal = item.totalAmount || (item.unitRate * item.qty * (1 - (item.discountPct || 0) / 100));
               return (
                 <tr key={item.id || index} style={{ height: '13.5px', maxHeight: '13.5px' }}>

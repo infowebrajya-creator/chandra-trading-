@@ -34,7 +34,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
     customerName, customerMobile, customerGstin, customerAddress, invoiceType,
     items, paymentMode, paidAmount, billDiscountAmount, billDiscountPct, freightAmount, isInterstate, notes, idempotencyKey,
     setCustomerInfo, setInvoiceType, setPaymentMode, setBillDiscountAmount, setBillDiscountPct, setFreightAmount, setIsInterstate, setNotes,
-    addItemByProduct, updateItemQty, updateItemFreeQty, updateItemRate, 
+    addItemByProduct, updateItemQty, updateItemFreeQty, updateItemRate, updateItemRemark,
     updateItemSchemeDiscount, updateItemAddlDiscount, removeItem, clearBill,
     restoreActiveCartFromIndexedDB
   } = useBillingStore();
@@ -49,6 +49,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
   const [fastQty, setFastQty] = useState<number>(1);
   const [fastFreeQty, setFastFreeQty] = useState<number>(0);
   const [fastRate, setFastRate] = useState<number>(0);
+  const [fastRemark, setFastRemark] = useState<string>('');
   const [fastSchemeDisc, setFastSchemeDisc] = useState<number>(0);
   const [fastAddlDisc, setFastAddlDisc] = useState<number>(0);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -77,6 +78,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
   const qtyInputRef = useRef<HTMLInputElement>(null);
   const freeInputRef = useRef<HTMLInputElement>(null);
   const rateInputRef = useRef<HTMLInputElement>(null);
+  const itemRemarkInputRef = useRef<HTMLInputElement>(null);
   const schInputRef = useRef<HTMLInputElement>(null);
   const addlInputRef = useRef<HTMLInputElement>(null);
 
@@ -201,6 +203,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
     setFastRate(prod.saleRate);
     setFastQty(1);
     setFastFreeQty(0);
+    setFastRemark('');
     setFastSchemeDisc(0);
     setFastAddlDisc(0);
     setShowSuggestions(false);
@@ -220,6 +223,14 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
 
   const handleRateKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      itemRemarkInputRef.current?.focus();
+      itemRemarkInputRef.current?.select();
+    }
+  };
+
+  const handleItemRemarkKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleAddFastItem();
     }
@@ -262,7 +273,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
     }
 
     if (selectedProduct) {
-      addItemByProduct(selectedProduct, fastQty, fastSchemeDisc, fastAddlDisc, fastFreeQty);
+      addItemByProduct(selectedProduct, fastQty, fastSchemeDisc, fastAddlDisc, fastFreeQty, fastRemark.trim());
       resetFastInputs();
       return;
     }
@@ -274,7 +285,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
 
     if (matchingBarcodes.length === 1) {
       const prod = matchingBarcodes[0];
-      addItemByProduct(prod, fastQty, fastSchemeDisc, fastAddlDisc, fastFreeQty);
+      addItemByProduct(prod, fastQty, fastSchemeDisc, fastAddlDisc, fastFreeQty, fastRemark.trim());
       resetFastInputs();
       return;
     }
@@ -282,7 +293,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
     // Exact SKU match
     const matchingSku = products.find(p => p.sku.toLowerCase().trim() === searchTerm.toLowerCase());
     if (matchingSku) {
-      addItemByProduct(matchingSku, fastQty, fastSchemeDisc, fastAddlDisc, fastFreeQty);
+      addItemByProduct(matchingSku, fastQty, fastSchemeDisc, fastAddlDisc, fastFreeQty, fastRemark.trim());
       resetFastInputs();
       return;
     }
@@ -302,6 +313,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
     setFastQty(1);
     setFastFreeQty(0);
     setFastRate(0);
+    setFastRemark('');
     setFastSchemeDisc(0);
     setFastAddlDisc(0);
     barcodeInputRef.current?.focus();
@@ -685,7 +697,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
 
       {/* Prominent Barcode / Search Fast Add Form - High Visibility (More Big) */}
       <form onSubmit={handleAddFastItem} className="grid grid-cols-12 gap-2.5 bg-[#DBEAFE]/50 border-2 border-[#BFDBFE] rounded-2xl p-3.5 items-center shrink-0 shadow-sm">
-        <div className="col-span-5 relative">
+        <div className="col-span-4 relative">
           <input
             ref={barcodeInputRef}
             type="text"
@@ -793,7 +805,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
           />
         </div>
 
-        <div className="col-span-2 h-14 flex items-center gap-2 bg-white border-2 border-[#D8E1EC] focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/20 rounded-xl px-3 py-1 shadow-xs transition-all">
+        <div className="col-span-1 h-14 flex items-center gap-1.5 bg-white border-2 border-[#D8E1EC] focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/20 rounded-xl px-2 py-1 shadow-xs transition-all">
           <span className="text-xs text-[#64748B] font-mono font-black uppercase">Rate:</span>
           <input
             ref={rateInputRef}
@@ -803,7 +815,22 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
             onChange={(e) => setFastRate(parseFloat(e.target.value) || 0)}
             onKeyDown={handleRateKeyDown}
             onFocus={(e) => e.target.select()}
-            className="w-full bg-transparent text-lg font-mono text-[#172B4D] font-black focus:outline-none"
+            className="w-full bg-transparent text-base font-mono text-[#172B4D] font-black focus:outline-none"
+          />
+        </div>
+
+        {/* Optional Item Remark Input */}
+        <div className="col-span-2 h-14 flex items-center gap-1.5 bg-white border-2 border-[#D8E1EC] focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/20 rounded-xl px-2.5 py-1 shadow-xs transition-all">
+          <span className="text-xs text-[#64748B] font-mono font-black uppercase shrink-0">Rem:</span>
+          <input
+            ref={itemRemarkInputRef}
+            type="text"
+            placeholder="Remark (Optional)..."
+            value={fastRemark}
+            onChange={(e) => setFastRemark(e.target.value)}
+            onKeyDown={handleItemRemarkKeyDown}
+            className="w-full bg-transparent text-sm font-semibold text-[#172B4D] focus:outline-none placeholder:text-[#94A3B8]"
+            title="Optional item remark (e.g. 10th EM, Damaged, Sample)"
           />
         </div>
 
@@ -870,6 +897,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
                   <th className="py-2.5 px-3 text-center w-10">S.</th>
                   <th className="py-2.5 px-3">Product Description</th>
                   <th className="py-2.5 px-2 text-center w-20">Pack</th>
+                  <th className="py-2.5 px-2 text-center w-28">Remark</th>
                   <th className="py-2.5 px-2 text-center w-24">Qty.</th>
                   <th className="py-2.5 px-2 text-center w-20">Free</th>
                   <th className="py-2.5 px-2 text-right w-28">Rate (₹)</th>
@@ -883,7 +911,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
               <tbody className="divide-y divide-[#E2E8F0]">
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="py-16 text-center text-[#64748B]">
+                    <td colSpan={12} className="py-16 text-center text-[#64748B]">
                       <div className="w-16 h-16 rounded-2xl bg-white border border-[#D8E1EC] p-2 mx-auto mb-3 shadow-xs flex items-center justify-center">
                         <img src="/logo.png" alt="WebRajya Invoice" className="w-full h-full object-contain" />
                       </div>
@@ -912,6 +940,18 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
 
                         {/* Pack */}
                         <td className="py-3 px-2 text-center font-mono font-bold text-xs text-[#334155]">{item.pack}</td>
+
+                        {/* Remark (Optional - Editable) */}
+                        <td className="py-3 px-2 text-center">
+                          <input
+                            type="text"
+                            placeholder="-"
+                            value={item.remark || ''}
+                            onChange={(e) => updateItemRemark(item.id, e.target.value)}
+                            className="w-24 h-9 px-2 py-1 bg-white border-2 border-[#CBD5E1] rounded-lg text-center text-[#1E293B] text-xs font-semibold shadow-2xs focus:border-[#2563EB] focus:outline-none placeholder:text-[#94A3B8]"
+                            title="Optional item remark (prints on invoice)"
+                          />
+                        </td>
 
                         {/* Quantity (Editable) */}
                         <td className="py-3 px-2 text-center font-mono">

@@ -30,7 +30,8 @@ interface BillingState {
   setIsInterstate: (isInterstate: boolean) => void;
   setNotes: (notes: string) => void;
 
-  addItemByProduct: (product: Product, qty?: number, schemeDiscPct?: number, addlDiscPct?: number, freeQty?: number) => void;
+  addItemByProduct: (product: Product, qty?: number, schemeDiscPct?: number, addlDiscPct?: number, freeQty?: number, remark?: string) => void;
+  updateItemRemark: (itemId: string, remark: string) => void;
   updateItemQty: (itemId: string, qty: number) => void;
   updateItemFreeQty: (itemId: string, freeQty: number) => void;
   updateItemRate: (itemId: string, saleRate: number) => void;
@@ -126,7 +127,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
     get().persistActiveCartToIndexedDB();
   },
 
-  addItemByProduct: (product, qty = 1, schemeDiscPct = 0, addlDiscPct = 0, freeQty = 0) => {
+  addItemByProduct: (product, qty = 1, schemeDiscPct = 0, addlDiscPct = 0, freeQty = 0, remark = '') => {
     const { items, isInterstate } = get();
     const existingIndex = items.findIndex(i => i.productId === product.id);
 
@@ -148,6 +149,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
         ...existing,
         qty: newQty,
         freeQty: existing.freeQty + freeQty,
+        remark: remark ? (existing.remark ? `${existing.remark}, ${remark}` : remark) : existing.remark,
         availableStock: product.stockQty,
         ...taxes
       };
@@ -171,6 +173,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
         barcode: product.barcode || '',
         hsnCode: product.hsnCode || '',
         pack: product.packInfo || '1 Pcs',
+        remark: remark || '',
         unit: product.unit,
         qty,
         freeQty,
@@ -186,6 +189,18 @@ export const useBillingStore = create<BillingState>((set, get) => ({
       };
       set({ items: [...items, newItem] });
     }
+    get().persistActiveCartToIndexedDB();
+  },
+
+  updateItemRemark: (itemId, remark) => {
+    const { items } = get();
+    const updated = items.map(item => {
+      if (item.id === itemId) {
+        return { ...item, remark };
+      }
+      return item;
+    });
+    set({ items: updated });
     get().persistActiveCartToIndexedDB();
   },
 

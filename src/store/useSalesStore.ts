@@ -66,6 +66,7 @@ function mapLocalInvoiceToRemote(inv: Invoice) {
     sku: it.sku || '',
     barcode: it.barcode || null,
     pack_info: it.pack || null,
+    remark: it.remark || null,
     unit: it.unit || 'Pcs',
     qty: it.qty,
     free_qty: it.freeQty || 0,
@@ -119,6 +120,7 @@ function mapRemoteInvoiceToLocal(remoteInv: any): Invoice {
     barcode: it.barcode || '',
     hsnCode: it.hsn_code || '4820',
     pack: it.pack_info || '1*1',
+    remark: it.remark || '',
     unit: (it.unit as any) || 'Pcs',
     qty: Number(it.qty || 1),
     freeQty: Number(it.free_qty || 0),
@@ -416,7 +418,12 @@ export const useSalesStore = create<SalesState>((set, get) => ({
           newInvoice.synced = true;
           const { itemRows } = mapLocalInvoiceToRemote(newInvoice);
           if (itemRows.length > 0) {
-            const { error: itemErr } = await client.from('invoice_items').upsert(itemRows, { onConflict: 'id' });
+            let { error: itemErr } = await client.from('invoice_items').upsert(itemRows, { onConflict: 'id' });
+            if (itemErr && (itemErr.message?.includes('remark') || itemErr.code === 'PGRST204')) {
+              const fallbackRows = itemRows.map(({ remark, ...rest }: any) => rest);
+              const retry = await client.from('invoice_items').upsert(fallbackRows, { onConflict: 'id' });
+              itemErr = retry.error;
+            }
             if (itemErr) {
               console.warn('Supabase invoice items save warning:', itemErr);
             }

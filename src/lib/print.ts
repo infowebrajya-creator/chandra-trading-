@@ -25,7 +25,7 @@ export function triggerA5Print(invoice: Invoice, shop: ShopProfile, _printSettin
   const paddingRowsCount = Math.max(0, minRows - items.length);
 
   const itemsHtml = items.map((item, index) => {
-    const remarkText = item.pack || (item.hsnCode ? `HSN:${item.hsnCode}` : '');
+    const remarkText = item.remark || item.pack || (item.hsnCode ? `HSN:${item.hsnCode}` : '');
     const itemTotal = item.totalAmount || (item.unitRate * item.qty * (1 - (item.discountPct || 0) / 100));
     return `
       <tr class="item-row">

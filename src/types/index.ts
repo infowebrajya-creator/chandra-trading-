@@ -37,6 +37,7 @@ export interface InvoiceItem {
   barcode: string;
   hsnCode: string;
   pack: string;
+  remark?: string;
   unit: UnitType;
   qty: number;
   freeQty: number;

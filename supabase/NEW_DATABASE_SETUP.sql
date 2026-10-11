@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS public.invoice_items (
   sku TEXT NOT NULL,
   barcode TEXT,
   pack_info TEXT,
+  remark TEXT,
   unit TEXT NOT NULL DEFAULT 'Pcs',
   qty NUMERIC(10,2) NOT NULL CHECK (qty > 0),
   free_qty NUMERIC(10,2) NOT NULL DEFAULT 0,
