@@ -139,12 +139,20 @@ function mapRemoteInvoiceToLocal(remoteInv: any): Invoice {
     availableStock: 0
   }));
 
+  const createdDate = remoteInv.created_at ? new Date(remoteInv.created_at) : null;
+  const localDate = createdDate && !isNaN(createdDate.getTime())
+    ? createdDate.toLocaleDateString('en-CA')
+    : (remoteInv.invoice_date || new Date().toLocaleDateString('en-CA'));
+  const localTime = createdDate && !isNaN(createdDate.getTime())
+    ? createdDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+    : (remoteInv.invoice_time || '');
+
   return {
     id: remoteInv.id,
     invoiceNumber: remoteInv.invoice_number,
     invoiceType,
-    date: remoteInv.invoice_date,
-    time: remoteInv.invoice_time || '',
+    date: localDate,
+    time: localTime,
     customerName: remoteInv.customer_name || 'Cash Customer',
     customerMobile: remoteInv.customer_mobile || '',
     customerGstin: remoteInv.customer_gstin || undefined,
@@ -179,7 +187,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
   error: null,
   searchQuery: '',
   paymentFilter: 'all',
-  dateRange: 'today',
+  dateRange: 'all',
 
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setPaymentFilter: (paymentFilter) => set({ paymentFilter }),
@@ -188,65 +196,68 @@ export const useSalesStore = create<SalesState>((set, get) => ({
   loadInvoices: async () => {
     set({ isLoading: true, error: null });
     try {
-      // 1. Immediately load local Dexie invoices for instant UI responsiveness
+      const client = getSupabaseClient();
+
+      if (client) {
+        // Setup Realtime subscription once for automatic cross-device sync
+        if (!realtimeSubscribed) {
+          try {
+            client
+              .channel('public:invoices_sync')
+              .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'invoices' },
+                () => {
+                  get().loadInvoices();
+                }
+              )
+              .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                  realtimeSubscribed = true;
+                }
+              });
+          } catch (e) {
+            console.warn('Realtime channel warning:', e);
+          }
+        }
+
+        // 1. Direct Supabase Query: Always pull latest database records
+        const { data: remoteInvoices, error: fetchErr } = await client
+          .from('invoices')
+          .select('*, invoice_items(*)')
+          .order('created_at', { ascending: false })
+          .limit(500);
+
+        if (!fetchErr && remoteInvoices) {
+          const mapped = remoteInvoices.map(mapRemoteInvoiceToLocal);
+          // Update local Dexie storage
+          await db.invoices.bulkPut(mapped).catch(() => {});
+          set({ invoices: mapped, isLoading: false });
+
+          // Also push any local-only unsynced invoices up to Supabase in background
+          const unsynced = await db.invoices.filter((i) => !i.synced).toArray();
+          for (const un of unsynced) {
+            try {
+              const { invoiceRow, itemRows } = mapLocalInvoiceToRemote(un);
+              const { error: upErr } = await client.from('invoices').upsert(invoiceRow, { onConflict: 'id' });
+              if (!upErr) {
+                if (itemRows.length > 0) {
+                  await client.from('invoice_items').upsert(itemRows, { onConflict: 'id' });
+                }
+                await db.invoices.update(un.id, { synced: true });
+              }
+            } catch (syncErr) {
+              console.warn('Sync push error:', syncErr);
+            }
+          }
+
+          return;
+        }
+      }
+
+      // Offline fallback: load from IndexedDB
       const localInvoices = await db.invoices.orderBy('createdAt').reverse().toArray();
       set({ invoices: localInvoices, isLoading: false });
-
-      const client = getSupabaseClient();
-      if (!client) return;
-
-      // 2. Setup Realtime subscription once for automatic cross-device sync
-      if (!realtimeSubscribed) {
-        try {
-          client
-            .channel('public:invoices_sync')
-            .on(
-              'postgres_changes',
-              { event: '*', schema: 'public', table: 'invoices' },
-              () => {
-                get().loadInvoices();
-              }
-            )
-            .subscribe((status) => {
-              if (status === 'SUBSCRIBED') {
-                realtimeSubscribed = true;
-              }
-            });
-        } catch (e) {
-          console.warn('Realtime channel warning:', e);
-        }
-      }
-
-      // 3. Push any unsynced local invoices to Supabase (e.g. bills created on mobile)
-      const unsynced = await db.invoices.filter((i) => !i.synced).toArray();
-      for (const un of unsynced) {
-        try {
-          const { invoiceRow, itemRows } = mapLocalInvoiceToRemote(un);
-          const { error: upErr } = await client.from('invoices').upsert(invoiceRow, { onConflict: 'id' });
-          if (!upErr) {
-            if (itemRows.length > 0) {
-              await client.from('invoice_items').upsert(itemRows, { onConflict: 'id' });
-            }
-            await db.invoices.update(un.id, { synced: true });
-          }
-        } catch (syncErr) {
-          console.warn('Error pushing unsynced invoice to Supabase:', syncErr);
-        }
-      }
-
-      // 4. Pull all remote invoices and their line items from Supabase
-      const { data: remoteInvoices, error: fetchErr } = await client
-        .from('invoices')
-        .select('*, invoice_items(*)')
-        .order('created_at', { ascending: false })
-        .limit(500);
-
-      if (!fetchErr && remoteInvoices && remoteInvoices.length > 0) {
-        const mapped = remoteInvoices.map(mapRemoteInvoiceToLocal);
-        await db.invoices.bulkPut(mapped);
-        const allInvoices = await db.invoices.orderBy('createdAt').reverse().toArray();
-        set({ invoices: allInvoices, isLoading: false });
-      }
     } catch (err: any) {
       console.warn('Failed to load invoices from Supabase:', err);
       const fallbackInvoices = await db.invoices.orderBy('createdAt').reverse().toArray();

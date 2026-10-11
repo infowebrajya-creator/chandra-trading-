@@ -46,29 +46,8 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
     loadProducts();
   }, []);
 
-  // Compute Daily Operational Dashboard Stats
-  const todayStr = new Date().toISOString().split('T')[0];
-  const localTodayStr = new Date().toLocaleDateString('en-CA');
-  const isDateToday = (d: string) => d === todayStr || d === localTodayStr;
-
-  const todayInvoices = invoices.filter(i => isDateToday(i.date));
-
-  const todayCompleted = todayInvoices.filter(i => i.status === 'completed');
-  const todayCompletedSalesAmt = todayCompleted.reduce((sum, i) => sum + i.netPayable, 0);
-
-  const todayCashAmt = todayCompleted
-    .filter(i => i.paymentMode === 'cash')
-    .reduce((sum, i) => sum + i.paidAmount, 0);
-
-  const todayUpiAmt = todayCompleted
-    .filter(i => i.paymentMode === 'upi')
-    .reduce((sum, i) => sum + i.paidAmount, 0);
-
-  const todayCompletedCount = todayCompleted.length;
-
-  const todayCancelled = todayInvoices.filter(i => i.status === 'cancelled');
-  const todayCancelledCount = todayCancelled.length;
-  const todayCancelledAmt = todayCancelled.reduce((sum, i) => sum + i.netPayable, 0);
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const isDateToday = (d: string) => d === todayStr;
 
   // Filter Invoices
   const filteredInvoices = invoices.filter(inv => {
@@ -102,7 +81,7 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
       } else if (dateRange === 'yesterday') {
         const yest = new Date(now);
         yest.setDate(now.getDate() - 1);
-        const yestStr = yest.toISOString().split('T')[0];
+        const yestStr = yest.toLocaleDateString('en-CA');
         if (inv.date !== yestStr) return false;
       } else if (dateRange === 'week') {
         const weekAgo = new Date(now);
@@ -117,6 +96,28 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
 
     return true;
   });
+
+  // Compute Operational Dashboard Stats based on active selection
+  const activeStatsInvoices = dateRange === 'today'
+    ? invoices.filter(i => isDateToday(i.date))
+    : filteredInvoices;
+
+  const todayCompleted = activeStatsInvoices.filter(i => i.status === 'completed');
+  const todayCompletedSalesAmt = todayCompleted.reduce((sum, i) => sum + i.netPayable, 0);
+
+  const todayCashAmt = todayCompleted
+    .filter(i => i.paymentMode === 'cash')
+    .reduce((sum, i) => sum + i.paidAmount, 0);
+
+  const todayUpiAmt = todayCompleted
+    .filter(i => i.paymentMode === 'upi')
+    .reduce((sum, i) => sum + i.paidAmount, 0);
+
+  const todayCompletedCount = todayCompleted.length;
+
+  const todayCancelled = activeStatsInvoices.filter(i => i.status === 'cancelled');
+  const todayCancelledCount = todayCancelled.length;
+  const todayCancelledAmt = todayCancelled.reduce((sum, i) => sum + i.netPayable, 0);
 
   const handleReprintA5 = (inv: Invoice) => {
     triggerA5Print(inv, shopProfile, printSettings);
@@ -160,7 +161,9 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
       {/* Top Reporting Dashboard Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 shrink-0 font-sans">
         <div className="p-3 bg-white border border-[#D8E1EC] rounded-xl shadow-sm">
-          <div className="text-[10px] uppercase text-[#64748B] font-bold">Today's Sales (Completed)</div>
+          <div className="text-[10px] uppercase text-[#64748B] font-bold">
+            {dateRange === 'today' ? "Today's Sales" : dateRange === 'all' ? "Total Sales" : "Period Sales"} (Completed)
+          </div>
           <div className="text-xl font-black text-[#15803D] font-mono mt-1">{formatCurrency(todayCompletedSalesAmt)}</div>
           <div className="text-[10px] text-[#64748B] mt-0.5">{todayCompletedCount} completed bill(s)</div>
         </div>
@@ -213,11 +216,11 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
               onChange={(e: any) => setDateRange(e.target.value)}
               className="px-2.5 py-1.5 bg-white border border-[#D8E1EC] rounded-lg text-xs text-[#172B4D] focus:outline-none focus:border-[#2563EB] font-semibold"
             >
+              <option value="all">All Dates</option>
               <option value="today">Today</option>
               <option value="yesterday">Yesterday</option>
               <option value="week">Last 7 Days</option>
               <option value="month">This Month</option>
-              <option value="all">All Dates</option>
             </select>
 
             {/* Payment Method Filter */}
