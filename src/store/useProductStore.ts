@@ -16,7 +16,7 @@ interface ProductState {
   setSearchQuery: (query: string) => void;
   setSelectedCategory: (category: string) => void;
   setStatusFilter: (status: 'all' | 'active' | 'inactive') => void;
-  loadProducts: () => Promise<void>;
+  loadProducts: (force?: boolean) => Promise<void>;
   addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Product>;
   updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
   toggleProductActiveStatus: (id: string) => Promise<void>;
@@ -93,7 +93,12 @@ export const useProductStore = create<ProductState>((set, get) => ({
   setSelectedCategory: (category) => set({ selectedCategory: category }),
   setStatusFilter: (statusFilter) => set({ statusFilter }),
 
-  loadProducts: async () => {
+  loadProducts: async (force = false) => {
+    // Avoid redundant network calls if products are already loaded in memory
+    if (!force && get().products.length > 0) {
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const client = getSupabaseClient();
