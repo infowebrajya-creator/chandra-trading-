@@ -277,15 +277,26 @@ export const useSalesStore = create<SalesState>((set, get) => ({
 
         if (!fetchErr && remoteInvoices) {
           const mapped = remoteInvoices.map(mapRemoteInvoiceToLocal);
-          // Update local Dexie storage
-          await db.invoices.bulkPut(mapped).catch(() => {});
-
-          // Merge local unsynced/cached invoices so nothing is lost
-          const localInvoices = await db.invoices.toArray().catch(() => []);
           const remoteIdSet = new Set(mapped.map((i) => i.id));
-          const localOnly = localInvoices.filter((i) => !remoteIdSet.has(i.id));
 
-          const combined = [...localOnly, ...mapped].sort((a, b) =>
+          // Load local Dexie storage
+          const localInvoices = await db.invoices.toArray().catch(() => []);
+
+          // Purge stale ghost/test invoices that are marked synced but do not exist in current Supabase DB
+          const staleSynced = localInvoices.filter((i) => i.synced && !remoteIdSet.has(i.id));
+          if (staleSynced.length > 0) {
+            await db.invoices.bulkDelete(staleSynced.map(s => s.id)).catch(() => {});
+          }
+
+          // Update local Dexie storage with active remote invoices
+          if (mapped.length > 0) {
+            await db.invoices.bulkPut(mapped).catch(() => {});
+          }
+
+          // Only keep truly unsynced pending local invoices (created offline, synced !== true)
+          const genuinelyPendingLocal = localInvoices.filter((i) => !i.synced && !remoteIdSet.has(i.id));
+
+          const combined = [...genuinelyPendingLocal, ...mapped].sort((a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
 
