@@ -31,3 +31,26 @@ export function generateInvoiceNumber(prefix: string = 'WR-', lastCount: number 
   const yearSuffix = new Date().getFullYear().toString().slice(-2);
   return `${prefix}${yearSuffix}-${nextNum.toString().padStart(5, '0')}`;
 }
+
+export function calculateNextInvoiceNumber(existingNumbers: string[], prefix: string = 'CTC-'): string {
+  const cleanPrefix = prefix || 'CTC-';
+  const yearSuffix = new Date().getFullYear().toString().slice(-2);
+  const escapedPrefix = cleanPrefix.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const pattern = new RegExp(`^${escapedPrefix}${yearSuffix}-(\\d+)$`);
+  let maxNum = 1000;
+
+  for (const numStr of existingNumbers) {
+    if (!numStr) continue;
+    const match = numStr.match(pattern);
+    if (match) {
+      const val = parseInt(match[1], 10);
+      if (!isNaN(val) && val > maxNum) {
+        maxNum = val;
+      }
+    }
+  }
+
+  const nextNum = maxNum + 1;
+  return `${cleanPrefix}${yearSuffix}-${nextNum.toString().padStart(5, '0')}`;
+}
+

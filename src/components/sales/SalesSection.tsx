@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Receipt, Search, Printer, Eye, XCircle, Download 
+  Receipt, Search, Printer, Eye, XCircle, Download, RefreshCw 
 } from 'lucide-react';
 import { useSalesStore } from '../../store/useSalesStore';
 import { useProductStore } from '../../store/useProductStore';
@@ -23,7 +23,8 @@ interface SalesSectionProps {
 export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
   const { 
     invoices, isLoading, searchQuery, paymentFilter, dateRange, 
-    setSearchQuery, setPaymentFilter, setDateRange, loadInvoices, cancelInvoice 
+    setSearchQuery, setPaymentFilter, setDateRange, loadInvoices, cancelInvoice,
+    syncInvoicesWithSupabase
   } = useSalesStore();
 
   const { products, loadProducts } = useProductStore();
@@ -32,6 +33,7 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
   // Additional Filter State
   const [billTypeFilter, setBillTypeFilter] = useState<InvoiceType | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'all'>('all');
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Modals state
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -40,6 +42,22 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
   const [reversalReason, setReversalReason] = useState('');
   const [isSubmittingReversal, setIsSubmittingReversal] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  const handleSyncSupabase = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await syncInvoicesWithSupabase();
+      if (res.success) {
+        onToast('success', 'Cloud Synced', res.message);
+      } else {
+        onToast('info', 'Supabase Notice', res.message);
+      }
+    } catch (e: any) {
+      onToast('error', 'Sync Failed', e?.message || 'Failed to sync with Supabase.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   useEffect(() => {
     loadInvoices();
@@ -259,13 +277,25 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
             </select>
           </div>
 
-          {/* Export Action Button */}
-          <button
-            onClick={() => setIsExportModalOpen(true)}
-            className="px-3.5 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-          >
-            <Download className="w-4 h-4" /> Export Data (CSV)
-          </button>
+          {/* Action Buttons: Sync & Export */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSyncSupabase}
+              disabled={isSyncing || isLoading}
+              className="px-3.5 py-2 bg-white hover:bg-[#F0F6FF] border border-[#D8E1EC] text-[#172B4D] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              title="Sync sales with Supabase cloud"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#2563EB] ${isSyncing || isLoading ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Cloud'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="px-3.5 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+            >
+              <Download className="w-4 h-4" /> Export Data (CSV)
+            </button>
+          </div>
         </div>
 
         {/* Table Content */}

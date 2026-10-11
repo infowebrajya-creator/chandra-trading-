@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Search, Plus, Trash2, ShoppingBag, User, Phone, FileText, StickyNote,
-  Save, AlertTriangle, Wifi, WifiOff, CheckCircle2
+  Save, AlertTriangle, Wifi, WifiOff, CheckCircle2, Printer
 } from 'lucide-react';
 import { useBillingStore } from '../../store/useBillingStore';
 import { useProductStore } from '../../store/useProductStore';
@@ -310,11 +310,11 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
   // Complete & Save Bill Action
   const handleConfirmSaveBill = async (receivedAmount: number, shouldPrint: boolean, upiRef?: string) => {
     if (isSubmitting) return;
-    setIsSubmitting(true);
     if (items.length === 0) {
       onToast('error', 'Empty Bill', 'Cannot save bill without items.');
       return;
     }
+    setIsSubmitting(true);
 
 
 
@@ -1169,9 +1169,17 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ onToast, onOpenA
           {/* Action Buttons */}
           <div className="space-y-2.5 pt-3 border-t border-[#D8E1EC]">
             <button
+              onClick={() => handleConfirmSaveBill(totals.netPayable, true)}
+              disabled={items.length === 0 || isSubmitting}
+              className="w-full py-3.5 bg-[#D97706] hover:bg-[#B45309] disabled:opacity-50 text-white rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer hover:shadow-lg active:scale-[0.99]"
+            >
+              <Printer className="w-5 h-5" /> Save & Print A5 [F9]
+            </button>
+
+            <button
               onClick={() => setIsQuickPayOpen(true)}
-              disabled={items.length === 0}
-              className="w-full py-3.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer hover:shadow-lg active:scale-[0.99]"
+              disabled={items.length === 0 || isSubmitting}
+              className="w-full py-3 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer hover:shadow-md active:scale-[0.99]"
             >
               <CheckCircle2 className="w-5 h-5" /> Quick Settle [F8]
             </button>

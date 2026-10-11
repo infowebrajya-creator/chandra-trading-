@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import type { Invoice, PaymentMode, StockMovement, AuditLog } from '../types';
 import { db } from '../lib/db';
 import { getSupabaseClient } from '../lib/supabase';
-import { generateInvoiceNumber } from '../utils/formatters';
+import { generateInvoiceNumber, calculateNextInvoiceNumber } from '../utils/formatters';
+
 
 interface SalesState {
   invoices: Invoice[];
@@ -181,6 +182,49 @@ function mapRemoteInvoiceToLocal(remoteInv: any): Invoice {
   };
 }
 
+async function ensureProductsExistInSupabase(client: any, items: any[]) {
+  if (!client || !items || items.length === 0) return;
+  try {
+    const productIds = Array.from(new Set(items.map((it: any) => it.product_id || it.productId).filter(Boolean)));
+    if (productIds.length === 0) return;
+
+    const { data: existing, error } = await client
+      .from('products')
+      .select('id')
+      .in('id', productIds);
+
+    if (error) {
+      console.warn('Check products existence error:', error);
+      return;
+    }
+
+    const existingSet = new Set((existing || []).map((p: any) => p.id));
+    const missing = items.filter((it: any) => !existingSet.has(it.product_id || it.productId));
+
+    if (missing.length > 0) {
+      const toUpsert = missing.map((it: any) => ({
+        id: it.product_id || it.productId,
+        sku: it.sku || `SKU-${(it.product_id || it.productId).slice(-6)}`,
+        name: it.product_name || it.productName || 'Stationery Item',
+        unit: it.unit || 'Pcs',
+        mrp: Number(it.mrp || it.unit_rate || it.unitRate || 0),
+        sale_rate: Number(it.unit_rate || it.unitRate || 0),
+        hsn_code: it.hsn_code || it.hsnCode || '4820',
+        gst_rate: Number(it.gst_rate || it.gstRate || 12),
+        category: 'General Supplies',
+        is_active: true
+      }));
+
+      const { error: upsertErr } = await client.from('products').upsert(toUpsert, { onConflict: 'id' });
+      if (upsertErr) {
+        console.warn('Upsert missing products error:', upsertErr);
+      }
+    }
+  } catch (e) {
+    console.warn('ensureProductsExistInSupabase exception:', e);
+  }
+}
+
 export const useSalesStore = create<SalesState>((set, get) => ({
   invoices: [],
   isLoading: false,
@@ -232,12 +276,23 @@ export const useSalesStore = create<SalesState>((set, get) => ({
           const mapped = remoteInvoices.map(mapRemoteInvoiceToLocal);
           // Update local Dexie storage
           await db.invoices.bulkPut(mapped).catch(() => {});
-          set({ invoices: mapped, isLoading: false });
+
+          // Merge local unsynced/cached invoices so nothing is lost
+          const localInvoices = await db.invoices.toArray().catch(() => []);
+          const remoteIdSet = new Set(mapped.map((i) => i.id));
+          const localOnly = localInvoices.filter((i) => !remoteIdSet.has(i.id));
+
+          const combined = [...localOnly, ...mapped].sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+
+          set({ invoices: combined, isLoading: false });
 
           // Also push any local-only unsynced invoices up to Supabase in background
           const unsynced = await db.invoices.filter((i) => !i.synced).toArray();
           for (const un of unsynced) {
             try {
+              await ensureProductsExistInSupabase(client, un.items);
               const { invoiceRow, itemRows } = mapLocalInvoiceToRemote(un);
               const { error: upErr } = await client.from('invoices').upsert(invoiceRow, { onConflict: 'id' });
               if (!upErr) {
@@ -265,7 +320,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
     }
   },
 
-  createCompletedInvoice: async (invoiceData, invoicePrefix = 'WR-') => {
+  createCompletedInvoice: async (invoiceData, invoicePrefix = 'CTC-') => {
     // 1. VALIDATION CHECKS
     if (!invoiceData.items || invoiceData.items.length === 0) {
       throw new Error('CANNOT_COMPLETE_SALE: Invoice must contain at least one item.');
@@ -289,8 +344,33 @@ export const useSalesStore = create<SalesState>((set, get) => ({
       }
     }
 
-    const totalCount = await db.invoices.count();
-    const invoiceNumber = generateInvoiceNumber(invoicePrefix, 1000 + totalCount);
+    // 3. COLLISION-FREE INVOICE NUMBER GENERATION
+    const localInvoices = await db.invoices.toArray().catch(() => []);
+    const inMemoryInvoices = get().invoices || [];
+    const allKnownNumbers = Array.from(new Set([
+      ...localInvoices.map((i: any) => i.invoiceNumber),
+      ...inMemoryInvoices.map((i: any) => i.invoiceNumber)
+    ]));
+
+    const client = getSupabaseClient();
+    if (client) {
+      try {
+        const { data: remoteNumbers } = await client
+          .from('invoices')
+          .select('invoice_number')
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (remoteNumbers) {
+          for (const rn of remoteNumbers) {
+            if (rn.invoice_number) allKnownNumbers.push(rn.invoice_number);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed fetching remote invoice numbers:', e);
+      }
+    }
+
+    let invoiceNumber = calculateNextInvoiceNumber(allKnownNumbers, invoicePrefix);
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
     const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -306,17 +386,41 @@ export const useSalesStore = create<SalesState>((set, get) => ({
       synced: false
     };
 
-    // 3. PUSH DIRECTLY TO SUPABASE CLOUD (If connected)
-    const client = getSupabaseClient();
+    // 4. PUSH DIRECTLY TO SUPABASE CLOUD (If connected)
     if (client) {
       try {
-        const { invoiceRow, itemRows } = mapLocalInvoiceToRemote(newInvoice);
-        const { error: invErr } = await client.from('invoices').upsert(invoiceRow, { onConflict: 'id' });
-        if (!invErr) {
-          if (itemRows.length > 0) {
-            await client.from('invoice_items').upsert(itemRows, { onConflict: 'id' });
+        // Ensure all products exist in Supabase products table first to satisfy foreign key
+        await ensureProductsExistInSupabase(client, newInvoice.items);
+
+        let invErr: any = null;
+        let attempts = 0;
+
+        while (attempts < 3) {
+          newInvoice.invoiceNumber = invoiceNumber;
+          const { invoiceRow } = mapLocalInvoiceToRemote(newInvoice);
+          const res = await client.from('invoices').upsert(invoiceRow, { onConflict: 'id' });
+          invErr = res.error;
+
+          if (invErr && invErr.code === '23505' && (invErr.message?.includes('invoice_number') || invErr.details?.includes('invoice_number'))) {
+            // Number collision occurred, bump number and retry
+            console.warn(`[Invoice conflict] ${invoiceNumber} exists. Recalculating next number...`);
+            allKnownNumbers.push(invoiceNumber);
+            invoiceNumber = calculateNextInvoiceNumber(allKnownNumbers, invoicePrefix);
+            attempts++;
+            continue;
           }
+          break;
+        }
+
+        if (!invErr) {
           newInvoice.synced = true;
+          const { itemRows } = mapLocalInvoiceToRemote(newInvoice);
+          if (itemRows.length > 0) {
+            const { error: itemErr } = await client.from('invoice_items').upsert(itemRows, { onConflict: 'id' });
+            if (itemErr) {
+              console.warn('Supabase invoice items save warning:', itemErr);
+            }
+          }
         } else {
           console.warn('Supabase direct invoice save warning:', invErr.message);
         }
@@ -327,7 +431,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
 
     let resultInvoice: Invoice = newInvoice;
 
-    // 4. LOCAL ATOMIC DEXIE TRANSACTION (Offline / Local storage cache)
+    // 5. LOCAL ATOMIC DEXIE TRANSACTION (Offline / Local storage cache)
     await db.transaction('rw', db.invoices, db.products, db.stockMovements, db.customers, async () => {
       // Re-verify idempotency inside transaction lock
       if (invoiceData.idempotencyKey) {
@@ -375,7 +479,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
             quantityChange: -totalDeduct,
             previousStock: prevStock,
             newStock,
-            reason: `Invoice ${invoiceNumber}`,
+            reason: `Invoice ${newInvoice.invoiceNumber}`,
             createdAt: now.toISOString(),
             referenceId: newInvoice.id
           };
@@ -383,6 +487,11 @@ export const useSalesStore = create<SalesState>((set, get) => ({
         }
       }
     });
+
+    // 6. Immediately update in-memory state so sales history displays invoice instantly
+    set((state) => ({
+      invoices: [resultInvoice, ...state.invoices.filter((i) => i.id !== resultInvoice.id)]
+    }));
 
     await get().loadInvoices();
     return resultInvoice;
@@ -481,6 +590,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
 
       for (const un of unSynced) {
         try {
+          await ensureProductsExistInSupabase(client, un.items);
           const { invoiceRow, itemRows } = mapLocalInvoiceToRemote(un);
           const { error: invErr } = await client.from('invoices').upsert(invoiceRow, { onConflict: 'id' });
           if (!invErr) {

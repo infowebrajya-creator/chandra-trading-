@@ -6,12 +6,12 @@ export function getSupabaseClient(url?: string, anonKey?: string): SupabaseClien
   const envUrl = 
     (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_SUPABASE_URL) ||
     (typeof import.meta !== 'undefined' && import.meta && import.meta.env && import.meta.env.VITE_SUPABASE_URL) ||
-    'https://gosfoxsylrapazhoorwu.supabase.co';
+    'https://afmonljoftcsclxdcdpy.supabase.co';
 
   const envKey = 
     (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) ||
     (typeof import.meta !== 'undefined' && import.meta && import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) ||
-    'sb_publishable_venHPzDM2FsTpd8U2P_dOA_RSnXc1Ne';
+    'sb_publishable_MnalKjv2r0bfDHCQDHDoog_cMNktES4';
 
   const targetUrl = url || envUrl;
   const targetKey = anonKey || envKey;
