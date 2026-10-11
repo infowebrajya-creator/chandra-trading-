@@ -11,6 +11,7 @@ import { useAuthStore } from './store/useAuthStore';
 import { useKeyboardShortcuts } from './utils/keyboard';
 import { useProductStore } from './store/useProductStore';
 import { useCustomerStore } from './store/useCustomerStore';
+import { useSalesStore } from './store/useSalesStore';
 
 export type MainSection = 'billing' | 'products' | 'sales' | 'settings';
 
@@ -18,11 +19,13 @@ export function App() {
   const { isAuthenticated, logout, user } = useAuthStore();
   const loadProducts = useProductStore((state) => state.loadProducts);
   const loadCustomers = useCustomerStore((state) => state.loadCustomers);
+  const loadInvoices = useSalesStore((state) => state.loadInvoices);
 
   useEffect(() => {
     loadProducts();
     loadCustomers();
-  }, [loadProducts, loadCustomers]);
+    loadInvoices();
+  }, [loadProducts, loadCustomers, loadInvoices]);
   // REQUIREMENT: Default screen is Billing POS
   const [activeSection, setActiveSection] = useState<MainSection>('billing');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);

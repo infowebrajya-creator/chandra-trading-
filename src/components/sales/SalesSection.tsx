@@ -48,7 +48,10 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
 
   // Compute Daily Operational Dashboard Stats
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayInvoices = invoices.filter(i => i.date === todayStr);
+  const localTodayStr = new Date().toLocaleDateString('en-CA');
+  const isDateToday = (d: string) => d === todayStr || d === localTodayStr;
+
+  const todayInvoices = invoices.filter(i => isDateToday(i.date));
 
   const todayCompleted = todayInvoices.filter(i => i.status === 'completed');
   const todayCompletedSalesAmt = todayCompleted.reduce((sum, i) => sum + i.netPayable, 0);
@@ -97,7 +100,7 @@ export const SalesSection: React.FC<SalesSectionProps> = ({ onToast }) => {
       now.setHours(0, 0, 0, 0);
 
       if (dateRange === 'today') {
-        if (inv.date !== todayStr) return false;
+        if (!isDateToday(inv.date)) return false;
       } else if (dateRange === 'yesterday') {
         const yest = new Date(now);
         yest.setDate(now.getDate() - 1);
